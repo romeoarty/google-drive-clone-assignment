@@ -46,14 +46,14 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 flex flex-col">
       <DashboardHeader />
       
-      <div className="flex">
+      <div className="flex flex-1">
         <DashboardSidebar />
         
         <main className="flex-1">
-          <div className="p-4 lg:p-8">
+          <div className="p-4 lg:p-8 h-full">
             {children}
           </div>
         </main>
