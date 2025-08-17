@@ -13,11 +13,17 @@ import {
   Upload,
   Menu,
   X,
+  Home,
+  Folder,
+  Star,
+  Clock,
+  Trash2,
+  HardDrive,
 } from "lucide-react";
 
 export default function DashboardHeader() {
   const { user, logout } = useAuth();
-  const { currentFolder } = useFiles();
+  const { currentFolder, navigateToFolder } = useFiles();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -209,9 +215,95 @@ export default function DashboardHeader() {
                   </h2>
                 </div>
 
-                {/* Mobile navigation items would go here */}
+                {/* Mobile navigation items */}
                 <nav className="mt-5 px-2 space-y-1">
-                  {/* Add mobile navigation items */}
+                  <button
+                    onClick={() => navigateToFolder(null)}
+                    className={`
+                      w-full flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors
+                      ${
+                        !currentFolder
+                          ? "bg-primary-100 text-primary-700 border-r-2 border-primary-500"
+                          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      }
+                    `}
+                  >
+                    <Home className="mr-4 h-6 w-6" />
+                    My Drive
+                  </button>
+                  
+                  <button
+                    onClick={() => {}} // TODO: Implement shared files
+                    className="w-full flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <Folder className="mr-4 h-6 w-6" />
+                    Shared with me
+                  </button>
+                  
+                  <button
+                    onClick={() => {}} // TODO: Implement starred files
+                    className="w-full flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <Star className="mr-4 h-6 w-6" />
+                    Starred
+                  </button>
+                  
+                  <button
+                    onClick={() => {}} // TODO: Implement recent files
+                    className="w-full flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <Clock className="mr-4 h-6 w-6" />
+                    Recent
+                  </button>
+                  
+                  <button
+                    onClick={() => {}} // TODO: Implement trash
+                    className="w-full flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <Trash2 className="mr-4 h-6 w-6" />
+                    Trash
+                  </button>
+                  
+                  <div className="pt-4 pb-2">
+                    <div className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Storage
+                    </div>
+                  </div>
+                  
+                  <div className="px-3 py-2">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center mb-2">
+                        <HardDrive className="h-5 w-5 text-gray-500 mr-2" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Storage
+                        </span>
+                      </div>
+
+                      {/* Storage progress bar */}
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div
+                          className="bg-primary-600 h-2 rounded-full"
+                          style={{ width: "35%" }}
+                        ></div>
+                      </div>
+
+                      <div className="text-xs text-gray-600">
+                        3.5 GB of 10 GB used
+                      </div>
+
+                      <button className="mt-3 text-xs text-primary-600 hover:text-primary-700 font-medium">
+                        Get more storage
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {}} // TODO: Implement settings
+                    className="w-full flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <Settings className="mr-4 h-6 w-6" />
+                    Settings
+                  </button>
                 </nav>
               </div>
             </div>
