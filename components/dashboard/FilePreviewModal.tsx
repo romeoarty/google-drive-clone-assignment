@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { Modal, Button, LoadingSpinner, useToast, RenameModal, DeleteConfirmModal } from "@/components/ui";
 import { IFile } from "@/lib/models";
 import {
@@ -16,7 +17,6 @@ import {
   File as FileIcon,
   Calendar,
   HardDrive,
-  User,
   Hash,
   AlertCircle,
   ZoomIn,
@@ -194,7 +194,7 @@ export default function FilePreviewModal({
               className="flex items-center justify-center p-4"
               style={{ minHeight: "400px" }}
             >
-              <img
+              <Image
                 src={previewUrl}
                 alt={file.originalName}
                 onLoad={handleImageLoad}
@@ -203,6 +203,9 @@ export default function FilePreviewModal({
                 style={{
                   transform: `scale(${imageZoom}) rotate(${imageRotation}deg)`,
                 }}
+                width={400}
+                height={200}
+                unoptimized
               />
             </div>
           )}
@@ -462,10 +465,6 @@ export default function FilePreviewModal({
                   Delete
                 </Button>
               )}
-            </div>
-
-            <div className="text-sm text-gray-500">
-              {formatFileSize(file.size)} • {getFileTypeCategory(file.mimeType)}
             </div>
           </div>
 
