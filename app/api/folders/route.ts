@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { Folder } from '@/lib/models';
 import { authenticate } from '@/lib/auth';
-import { sortItems } from '@/lib/fileUtils';
+
 
 // GET /api/folders - Get all folders for the authenticated user
 export async function GET(request: NextRequest) {
@@ -41,8 +41,29 @@ export async function GET(request: NextRequest) {
       .populate('filesCount')
       .lean();
 
-    // Sort folders using reusable sort function
-    const sortedFolders = sortItems(folders, sortBy, order);
+    // Sort folders
+    const sortedFolders = folders.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          });
+          break;
+        case 'date':
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+        default:
+          comparison = a.name.localeCompare(b.name, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          });
+      }
+      
+      return order === 'desc' ? -comparison : comparison;
+    });
 
     return NextResponse.json({
       folders: sortedFolders,

@@ -48,7 +48,7 @@ export default function DashboardLayout({
       <div className="flex">
         <DashboardSidebar />
         
-        <main className="flex-1 lg:ml-64">
+        <main className="flex-1">
           <div className="p-4 lg:p-8">
             {children}
           </div>

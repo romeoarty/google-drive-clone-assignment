@@ -7,10 +7,9 @@ import { authenticate } from '@/lib/auth';
 import {
   ensureUploadDir,
   generateUniqueFilename,
-  validateFileUpload,
   UPLOAD_DIR,
-  sortItems,
 } from '@/lib/fileUtils';
+import { validateFileUpload } from '@/lib/clientUtils';
 
 // GET /api/files - Get all files for the authenticated user
 export async function GET(request: NextRequest) {
@@ -46,8 +45,32 @@ export async function GET(request: NextRequest) {
 
     const files = await File.find(query).lean();
 
-    // Sort files using reusable sort function
-    const sortedFiles = sortItems(files, sortBy, order);
+    // Sort files
+    const sortedFiles = files.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = (a.originalName || a.name).localeCompare(b.originalName || b.name, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          });
+          break;
+        case 'date':
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+        case 'size':
+          comparison = (a.size || 0) - (b.size || 0);
+          break;
+        default:
+          comparison = (a.originalName || a.name).localeCompare(b.originalName || b.name, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          });
+      }
+      
+      return order === 'desc' ? -comparison : comparison;
+    });
 
     return NextResponse.json({
       files: sortedFiles,

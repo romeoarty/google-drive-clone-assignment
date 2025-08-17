@@ -65,7 +65,7 @@ export const FilesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': options.body instanceof FormData ? undefined : 'application/json',
+          ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
           ...options.headers,
         },
       });

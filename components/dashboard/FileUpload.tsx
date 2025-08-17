@@ -93,7 +93,7 @@ export default function FileUpload({ isOpen, onClose }: FileUploadProps) {
       );
 
       try {
-        // Simulate progress updates (in a real implementation, you'd track actual upload progress)
+        // Simulate progress updates
         const progressInterval = setInterval(() => {
           setUploadFiles((prev) =>
             prev.map((f) =>
