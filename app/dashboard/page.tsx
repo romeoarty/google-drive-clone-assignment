@@ -8,6 +8,8 @@ import FileGrid from '@/components/dashboard/FileGrid';
 import FileList from '@/components/dashboard/FileList';
 import Breadcrumb from '@/components/dashboard/Breadcrumb';
 import CreateFolderModal from '@/components/dashboard/CreateFolderModal';
+import FilePreviewModal from '@/components/dashboard/FilePreviewModal';
+import { IFile } from '@/lib/models';
 import { 
   Upload, 
   FolderPlus, 
@@ -28,12 +30,16 @@ export default function DashboardPage() {
     sortOrder,
     setSortBy,
     setSortOrder,
-    fetchData
+    fetchData,
+    deleteFile,
+    renameFile
   } = useFiles();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<IFile | null>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const { toast } = useToast();
 
   // Memoized sort change handler (addressing feedback)
@@ -61,6 +67,29 @@ export default function DashboardPage() {
       toast('Failed to refresh files', 'error');
     }
   }, [fetchData, toast]);
+
+  const handleFilePreview = useCallback((file: IFile) => {
+    setPreviewFile(file);
+    setIsPreviewModalOpen(true);
+  }, []);
+
+  const handlePreviewModalClose = useCallback(() => {
+    setIsPreviewModalOpen(false);
+    setPreviewFile(null);
+  }, []);
+
+  const handleFileRename = useCallback(async (fileId: string, newName: string) => {
+    return await renameFile(fileId, newName);
+  }, [renameFile]);
+
+  const handleFileDelete = useCallback(async (fileId: string) => {
+    const result = await deleteFile(fileId);
+    if (result.success) {
+      setIsPreviewModalOpen(false);
+      setPreviewFile(null);
+    }
+    return result;
+  }, [deleteFile]);
 
   if (error) {
     return (
@@ -198,9 +227,9 @@ export default function DashboardPage() {
       ) : (
         <div className="bg-white rounded-lg border border-gray-200">
           {viewMode === 'grid' ? (
-            <FileGrid files={files} folders={folders} />
+            <FileGrid files={files} folders={folders} onPreview={handleFilePreview} />
           ) : (
-            <FileList files={files} folders={folders} />
+            <FileList files={files} folders={folders} onPreview={handleFilePreview} />
           )}
         </div>
       )}
@@ -214,6 +243,14 @@ export default function DashboardPage() {
       <CreateFolderModal
         isOpen={isCreateFolderModalOpen}
         onClose={() => setIsCreateFolderModalOpen(false)}
+      />
+
+      <FilePreviewModal
+        file={previewFile}
+        isOpen={isPreviewModalOpen}
+        onClose={handlePreviewModalClose}
+        onRename={handleFileRename}
+        onDelete={handleFileDelete}
       />
     </div>
   );

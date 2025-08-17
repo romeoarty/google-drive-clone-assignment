@@ -29,6 +29,7 @@ import {
 interface FileListProps {
   files: IFile[];
   folders: IFolder[];
+  onPreview: (file: IFile) => void;
 }
 
 interface ContextMenuProps {
@@ -59,12 +60,9 @@ const getFileIconColor = (mimeType: string) => {
   return "text-gray-500";
 };
 
-const ContextMenu: React.FC<ContextMenuProps> = ({
-  isOpen,
-  position,
-  item,
-  onClose,
-}) => {
+const ContextMenu: React.FC<
+  ContextMenuProps & { onPreview: (file: IFile) => void }
+> = ({ isOpen, position, item, onClose, onPreview }) => {
   const { deleteFile, deleteFolder, renameFile, renameFolder } = useFiles();
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -126,10 +124,10 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 
   const handlePreview = useCallback(() => {
     if (item.type === "file" && isPreviewable((item as IFile).mimeType)) {
-      window.open(`/api/files/${item._id}/download`, "_blank");
+      onPreview(item as IFile);
     }
     onClose();
-  }, [item, onClose]);
+  }, [item, onClose, onPreview]);
 
   if (!isOpen) return null;
 
@@ -178,7 +176,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
   );
 };
 
-export default function FileList({ files, folders }: FileListProps) {
+export default function FileList({ files, folders, onPreview }: FileListProps) {
   const { navigateToFolder } = useFiles();
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
@@ -195,11 +193,11 @@ export default function FileList({ files, folders }: FileListProps) {
       if (type === "folder") {
         navigateToFolder(item._id);
       } else {
-        // For files, you could implement a preview or download action
-        window.open(`/api/files/${item._id}/download`, "_blank");
+        // For files, open preview modal
+        onPreview(item as IFile);
       }
     },
-    [navigateToFolder]
+    [navigateToFolder, onPreview]
   );
 
   const handleContextMenu = useCallback(
@@ -357,6 +355,7 @@ export default function FileList({ files, folders }: FileListProps) {
           position={contextMenu.position}
           item={contextMenu.item}
           onClose={closeContextMenu}
+          onPreview={onPreview}
         />
       )}
     </div>
