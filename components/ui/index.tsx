@@ -236,3 +236,230 @@ export const useToast = () => {
 
   return { toast };
 };
+
+// RenameModal Component
+interface RenameModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentName: string;
+  onRename: (newName: string) => void;
+  title?: string;
+  itemType?: 'file' | 'folder';
+  isLoading?: boolean;
+}
+
+export const RenameModal: React.FC<RenameModalProps> = ({
+  isOpen,
+  onClose,
+  currentName,
+  onRename,
+  title = "Rename",
+  itemType = "item",
+  isLoading = false
+}) => {
+  const [newName, setNewName] = React.useState(currentName);
+  const [error, setError] = React.useState("");
+  const [showCloseConfirm, setShowCloseConfirm] = React.useState(false);
+
+  React.useEffect(() => {
+    setNewName(currentName);
+    setError("");
+    setShowCloseConfirm(false);
+  }, [currentName, isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newName.trim()) {
+      setError("Name cannot be empty");
+      return;
+    }
+    
+    if (newName.trim() === currentName) {
+      onClose();
+      return;
+    }
+    
+    onRename(newName.trim());
+  };
+
+  const handleClose = () => {
+    if (newName.trim() && newName.trim() !== currentName) {
+      setShowCloseConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleCloseConfirm = () => {
+    setShowCloseConfirm(false);
+    onClose();
+  };
+
+  const handleCloseCancel = () => {
+    setShowCloseConfirm(false);
+  };
+
+  return (
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose} title={title} size="sm">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Input
+              label={`New ${itemType} name`}
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder={`Enter new ${itemType} name`}
+              error={error}
+              disabled={isLoading}
+              autoFocus
+              maxLength={100}
+            />
+            
+            {/* Character counter */}
+            <div className="mt-1 text-right">
+              <span
+                className={`text-xs ${
+                  newName.length > 80 ? "text-orange-600" : "text-gray-500"
+                }`}
+              >
+                {newName.length}/100 characters
+              </span>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={isLoading}
+              disabled={!newName.trim() || newName.trim() === currentName}
+            >
+              Rename
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Close Confirmation Modal */}
+      <Modal
+        isOpen={showCloseConfirm}
+        onClose={handleCloseCancel}
+        title="Unsaved Changes"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+              <svg className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Unsaved Changes
+            </h3>
+            
+            <p className="text-sm text-gray-500">
+              Are you sure you want to close? Your changes will be lost.
+            </p>
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseCancel}
+            >
+              Continue Editing
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleCloseConfirm}
+            >
+              Close Without Saving
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+};
+
+// DeleteConfirmModal Component
+interface DeleteConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  itemName: string;
+  onDelete: () => void;
+  itemType?: 'file' | 'folder';
+  isLoading?: boolean;
+}
+
+export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
+  isOpen,
+  onClose,
+  itemName,
+  onDelete,
+  itemType = "item",
+  isLoading = false
+}) => {
+  const handleDelete = () => {
+    onDelete();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirm Delete" size="sm">
+      <div className="space-y-4">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Delete {itemType.charAt(0).toUpperCase() + itemType.slice(1)}
+          </h3>
+          
+                      <p className="text-sm text-gray-500">
+              Are you sure you want to delete <span className="font-medium text-gray-900">&ldquo;{itemName}&rdquo;</span>?
+            </p>
+          
+          <p className="text-xs text-gray-400 mt-2">
+            This action cannot be undone.
+          </p>
+        </div>
+
+        <div className="flex justify-end space-x-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={handleDelete}
+            loading={isLoading}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};

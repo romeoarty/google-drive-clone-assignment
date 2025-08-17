@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Modal, Button, LoadingSpinner, useToast } from "@/components/ui";
+import { Modal, Button, LoadingSpinner, useToast, RenameModal, DeleteConfirmModal } from "@/components/ui";
 import { IFile } from "@/lib/models";
 import {
   Download,
@@ -69,12 +69,14 @@ export default function FilePreviewModal({
   onDelete,
 }: FilePreviewModalProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
   const [imageRotation, setImageRotation] = useState(0);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // URLs for different purposes
   const downloadUrl = file ? `/api/files/${file._id}/download` : "";
@@ -95,49 +97,50 @@ export default function FilePreviewModal({
     }
   }, [file, downloadUrl]);
 
-  const handleRename = useCallback(async () => {
+  const handleRename = useCallback(() => {
+    setShowRenameModal(true);
+  }, []);
+
+  const handleRenameSubmit = useCallback(async (newName: string) => {
     if (!file || !onRename) return;
 
-    const newName = prompt(
-      `Enter new name for ${file.originalName}:`,
-      file.originalName
-    );
-    if (newName && newName.trim() !== file.originalName) {
-      setIsRenaming(true);
-      try {
-        const result = await onRename(file._id, newName.trim());
-        if (result.success) {
-          toast("File renamed successfully", "success");
-        } else {
-          toast(result.error || "Failed to rename file", "error");
-        }
-      } catch (error) {
-        toast("Failed to rename file", "error");
-      } finally {
-        setIsRenaming(false);
+    setIsRenaming(true);
+    try {
+      const result = await onRename(file._id, newName);
+      if (result.success) {
+        toast("File renamed successfully", "success");
+        setShowRenameModal(false);
+      } else {
+        toast(result.error || "Failed to rename file", "error");
       }
+    } catch (error) {
+      toast("Failed to rename file", "error");
+    } finally {
+      setIsRenaming(false);
     }
   }, [file, onRename, toast]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
+    setShowDeleteModal(true);
+  }, []);
+
+  const handleDeleteSubmit = useCallback(async () => {
     if (!file || !onDelete) return;
 
-    const confirmMessage = `Are you sure you want to delete "${file.originalName}"?`;
-    if (window.confirm(confirmMessage)) {
-      setIsDeleting(true);
-      try {
-        const result = await onDelete(file._id);
-        if (result.success) {
-          toast("File deleted successfully", "success");
-          onClose();
-        } else {
-          toast(result.error || "Failed to delete file", "error");
-        }
-      } catch (error) {
-        toast("Failed to delete file", "error");
-      } finally {
-        setIsDeleting(false);
+    setIsDeleting(true);
+    try {
+      const result = await onDelete(file._id);
+      if (result.success) {
+        toast("File deleted successfully", "success");
+        setShowDeleteModal(false);
+        onClose();
+      } else {
+        toast(result.error || "Failed to delete file", "error");
       }
+    } catch (error) {
+      toast("Failed to delete file", "error");
+    } finally {
+      setIsDeleting(false);
     }
   }, [file, onDelete, toast, onClose]);
 
@@ -418,59 +421,82 @@ export default function FilePreviewModal({
   if (!file) return null;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={file.originalName}
-      size="xl"
-    >
-      <div className="space-y-6">
-        {/* Action buttons */}
-        <div className="flex items-center justify-between border-b border-gray-200 pb-4">
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </Button>
-
-            {onRename && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRename}
-                loading={isRenaming}
-                disabled={isRenaming}
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                Rename
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={file.originalName}
+        size="xl"
+      >
+        <div className="space-y-6">
+          {/* Action buttons */}
+          <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Download
               </Button>
-            )}
 
-            {onDelete && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleDelete}
-                loading={isDeleting}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            )}
+              {onRename && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRename}
+                  loading={isRenaming}
+                  disabled={isRenaming}
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Rename
+                </Button>
+              )}
+
+              {onDelete && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDelete}
+                  loading={isDeleting}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              )}
+            </div>
+
+            <div className="text-sm text-gray-500">
+              {formatFileSize(file.size)} • {getFileTypeCategory(file.mimeType)}
+            </div>
           </div>
 
-          <div className="text-sm text-gray-500">
-            {formatFileSize(file.size)} • {getFileTypeCategory(file.mimeType)}
-          </div>
+          {/* Preview content */}
+          <div className="relative">{renderPreviewContent()}</div>
+
+          {/* File information */}
+          {renderFileInfo()}
         </div>
+      </Modal>
 
-        {/* Preview content */}
-        <div className="relative">{renderPreviewContent()}</div>
+      {/* Rename Modal */}
+      <RenameModal
+        isOpen={showRenameModal}
+        onClose={() => setShowRenameModal(false)}
+        currentName={file?.originalName || ""}
+        onRename={handleRenameSubmit}
+        title="Rename File"
+        itemType="file"
+        isLoading={isRenaming}
+      />
 
-        {/* File information */}
-        {renderFileInfo()}
-      </div>
-    </Modal>
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        itemName={file?.originalName || ""}
+        onDelete={handleDeleteSubmit}
+        itemType="file"
+        isLoading={isDeleting}
+      />
+    </>
   );
 }

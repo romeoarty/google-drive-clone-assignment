@@ -25,6 +25,7 @@ import {
   getFileTypeCategory,
   isPreviewable,
 } from "@/lib/clientUtils";
+import { RenameModal, DeleteConfirmModal } from "@/components/ui";
 
 interface FileListProps {
   files: IFile[];
@@ -37,6 +38,9 @@ interface ContextMenuProps {
   position: { x: number; y: number };
   item: (IFile | IFolder) & { type: "file" | "folder" };
   onClose: () => void;
+  onPreview: (file: IFile) => void;
+  onShowRenameModal: (item: (IFile | IFolder) & { type: "file" | "folder" }) => void;
+  onShowDeleteModal: (item: (IFile | IFolder) & { type: "file" | "folder" }) => void;
 }
 
 const getFileIcon = (mimeType: string) => {
@@ -60,12 +64,19 @@ const getFileIconColor = (mimeType: string) => {
   return "text-gray-500";
 };
 
-const ContextMenu: React.FC<
-  ContextMenuProps & { onPreview: (file: IFile) => void }
-> = ({ isOpen, position, item, onClose, onPreview }) => {
-  const { deleteFile, deleteFolder, renameFile, renameFolder } = useFiles();
+export const FileListContextMenu: React.FC<ContextMenuProps> = ({
+  item,
+  isOpen,
+  position,
+  onClose,
+  onPreview,
+  onShowRenameModal,
+  onShowDeleteModal,
+}) => {
+  const { renameFile, renameFolder, deleteFile, deleteFolder } = useFiles();
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDownload = useCallback(() => {
     if (item.type === "file") {
@@ -75,52 +86,14 @@ const ContextMenu: React.FC<
   }, [item, onClose]);
 
   const handleRename = useCallback(() => {
-    const currentName =
-      item.type === "file" ? (item as IFile).originalName : item.name;
-    const newName = prompt(`Enter new name for ${currentName}:`, currentName);
-    if (newName && newName.trim() !== currentName) {
-      setIsRenaming(true);
-      const renameAction =
-        item.type === "file"
-          ? renameFile(item._id, newName.trim())
-          : renameFolder(item._id, newName.trim());
-
-      renameAction.then((result) => {
-        if (result.success) {
-          toast(
-            `${item.type === "file" ? "File" : "Folder"} renamed successfully`,
-            "success"
-          );
-        } else {
-          toast(result.error || "Failed to rename", "error");
-        }
-        setIsRenaming(false);
-      });
-    }
+    onShowRenameModal(item);
     onClose();
-  }, [item, renameFile, renameFolder, toast, onClose]);
+  }, [item, onShowRenameModal, onClose]);
 
   const handleDelete = useCallback(() => {
-    const itemName =
-      item.type === "file" ? (item as IFile).originalName : item.name;
-    const confirmMessage = `Are you sure you want to delete "${itemName}"?`;
-    if (window.confirm(confirmMessage)) {
-      const deleteAction =
-        item.type === "file" ? deleteFile(item._id) : deleteFolder(item._id);
-
-      deleteAction.then((result) => {
-        if (result.success) {
-          toast(
-            `${item.type === "file" ? "File" : "Folder"} deleted successfully`,
-            "success"
-          );
-        } else {
-          toast(result.error || "Failed to delete", "error");
-        }
-      });
-    }
+    onShowDeleteModal(item);
     onClose();
-  }, [item, deleteFile, deleteFolder, toast, onClose]);
+  }, [item, onShowDeleteModal, onClose]);
 
   const handlePreview = useCallback(() => {
     if (item.type === "file" && isPreviewable((item as IFile).mimeType)) {
@@ -177,7 +150,8 @@ const ContextMenu: React.FC<
 };
 
 export default function FileList({ files, folders, onPreview }: FileListProps) {
-  const { navigateToFolder } = useFiles();
+  const { navigateToFolder, renameFile, renameFolder, deleteFile, deleteFolder } = useFiles();
+  const { toast } = useToast();
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
     position: { x: number; y: number };
@@ -187,6 +161,67 @@ export default function FileList({ files, folders, onPreview }: FileListProps) {
     position: { x: 0, y: 0 },
     item: null,
   });
+
+  // Modal states
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [modalItem, setModalItem] = useState<((IFile | IFolder) & { type: "file" | "folder" }) | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleShowRenameModal = useCallback((item: (IFile | IFolder) & { type: "file" | "folder" }) => {
+    setModalItem(item);
+    setShowRenameModal(true);
+  }, []);
+
+  const handleShowDeleteModal = useCallback((item: (IFile | IFolder) & { type: "file" | "folder" }) => {
+    setModalItem(item);
+    setShowDeleteModal(true);
+  }, []);
+
+  const handleRenameSubmit = useCallback((newName: string) => {
+    if (!modalItem) return;
+    
+    setIsRenaming(true);
+    const renameAction =
+      modalItem.type === "file"
+        ? renameFile(modalItem._id, newName)
+        : renameFolder(modalItem._id, newName);
+
+    renameAction.then((result) => {
+      if (result.success) {
+        toast(
+          `${modalItem.type === "file" ? "File" : "Folder"} renamed successfully`,
+          "success"
+        );
+        setShowRenameModal(false);
+      } else {
+        toast(result.error || "Failed to rename", "error");
+      }
+      setIsRenaming(false);
+    });
+  }, [modalItem, renameFile, renameFolder, toast]);
+
+  const handleDeleteSubmit = useCallback(() => {
+    if (!modalItem) return;
+    
+    setIsDeleting(true);
+    const deleteAction =
+      modalItem.type === "file" ? deleteFile(modalItem._id) : deleteFolder(modalItem._id);
+
+    deleteAction.then((result) => {
+      if (result.success) {
+        toast(
+          `${modalItem.type === "file" ? "File" : "Folder"} deleted successfully`,
+          "success"
+        );
+        setShowDeleteModal(false);
+      } else {
+        toast(result.error || "Failed to delete", "error");
+      }
+      setIsDeleting(false);
+    });
+  }, [modalItem, deleteFile, deleteFolder, toast]);
 
   const handleItemClick = useCallback(
     (item: IFile | IFolder, type: "file" | "folder") => {
@@ -336,7 +371,7 @@ export default function FileList({ files, folders, onPreview }: FileListProps) {
                 {/* Actions */}
                 <div className="col-span-2 sm:col-span-1 flex justify-end">
                   <button
-                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleContextMenu(e, item, item.type);
@@ -383,12 +418,39 @@ export default function FileList({ files, folders, onPreview }: FileListProps) {
 
       {/* Context Menu */}
       {contextMenu.item && (
-        <ContextMenu
+        <FileListContextMenu
           isOpen={contextMenu.isOpen}
           position={contextMenu.position}
           item={contextMenu.item}
           onClose={closeContextMenu}
           onPreview={onPreview}
+          onShowRenameModal={handleShowRenameModal}
+          onShowDeleteModal={handleShowDeleteModal}
+        />
+      )}
+
+      {/* Rename Modal */}
+      {modalItem && (
+        <RenameModal
+          isOpen={showRenameModal}
+          onClose={() => setShowRenameModal(false)}
+          currentName={modalItem.type === "file" ? (modalItem as IFile).originalName : modalItem.name}
+          onRename={handleRenameSubmit}
+          title={`Rename ${modalItem.type === "file" ? "File" : "Folder"}`}
+          itemType={modalItem.type}
+          isLoading={isRenaming}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {modalItem && (
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          itemName={modalItem.type === "file" ? (modalItem as IFile).originalName : modalItem.name}
+          onDelete={handleDeleteSubmit}
+          itemType={modalItem.type}
+          isLoading={isDeleting}
         />
       )}
     </div>
