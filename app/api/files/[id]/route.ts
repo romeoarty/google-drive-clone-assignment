@@ -7,7 +7,7 @@ import { deleteFile } from '@/lib/fileUtils';
 // GET /api/files/[id] - Get a specific file
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -21,8 +21,10 @@ export async function GET(
 
     await connectDB();
 
+    const { id } = await params;
+
     const file = await File.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     });
@@ -47,7 +49,7 @@ export async function GET(
 // PUT /api/files/[id] - Update file name
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -87,9 +89,11 @@ export async function PUT(
 
     await connectDB();
 
+    const { id } = await params;
+
     // Find the file
     const file = await File.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     });
@@ -101,13 +105,13 @@ export async function PUT(
       );
     }
 
-    // Check for duplicate file name in the same directory
+    // Check if a file with the same name already exists in the same folder
     const existingFile = await File.findOne({
       originalName: trimmedName,
       userId: user._id,
       folderId: file.folderId,
       isDeleted: false,
-      _id: { $ne: params.id }, // Exclude current file
+      _id: { $ne: id }, // Exclude current file
     });
 
     if (existingFile) {
@@ -149,7 +153,7 @@ export async function PUT(
 // DELETE /api/files/[id] - Delete a file (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -163,9 +167,11 @@ export async function DELETE(
 
     await connectDB();
 
+    const { id } = await params;
+
     // Find the file
     const file = await File.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     });
@@ -179,7 +185,7 @@ export async function DELETE(
 
     // Soft delete the file record
     await File.findOneAndUpdate(
-      { _id: params.id, userId: user._id },
+      { _id: id, userId: user._id },
       { isDeleted: true, deletedAt: new Date() }
     );
 

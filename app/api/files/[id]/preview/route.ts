@@ -8,7 +8,7 @@ import { authenticate } from '@/lib/auth';
 // GET /api/files/[id]/preview - Preview a file (without download headers)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -22,9 +22,11 @@ export async function GET(
 
     await connectDB();
 
+    const { id } = await params;
+
     // Find the file
     const file = await File.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     });
@@ -42,7 +44,7 @@ export async function GET(
       const fileBuffer = await readFile(fullPath);
 
       // Create response without attachment header for preview
-      const response = new NextResponse(fileBuffer, {
+      const response = new NextResponse(new Uint8Array(fileBuffer), {
         status: 200,
         headers: {
           'Content-Type': file.mimeType,

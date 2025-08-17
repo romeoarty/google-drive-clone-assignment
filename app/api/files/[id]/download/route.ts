@@ -45,7 +45,7 @@ export async function GET(
       const fileBuffer = await readFile(fullPath);
 
       // Create response with appropriate headers
-      const response = new NextResponse(fileBuffer, {
+      const response = new NextResponse(new Uint8Array(fileBuffer), {
         status: 200,
         headers: {
           'Content-Type': file.mimeType,

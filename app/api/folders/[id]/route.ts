@@ -6,7 +6,7 @@ import { authenticate } from '@/lib/auth';
 // GET /api/folders/[id] - Get a specific folder
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -20,8 +20,10 @@ export async function GET(
 
     await connectDB();
 
+    const { id } = await params;
+
     const folder = await Folder.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     })
@@ -48,7 +50,7 @@ export async function GET(
 // PUT /api/folders/[id] - Update folder name
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -88,9 +90,11 @@ export async function PUT(
 
     await connectDB();
 
+    const { id } = await params;
+
     // Find the folder
     const folder = await Folder.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     });
@@ -108,7 +112,7 @@ export async function PUT(
       userId: user._id,
       parentId: folder.parentId,
       isDeleted: false,
-      _id: { $ne: params.id }, // Exclude current folder
+      _id: { $ne: id }, // Exclude current folder
     });
 
     if (existingFolder) {
@@ -150,7 +154,7 @@ export async function PUT(
 // DELETE /api/folders/[id] - Delete a folder (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -164,9 +168,11 @@ export async function DELETE(
 
     await connectDB();
 
+    const { id } = await params;
+
     // Find the folder
     const folder = await Folder.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     });
@@ -179,7 +185,7 @@ export async function DELETE(
     }
 
     // Recursively soft delete all subfolders and files
-    await softDeleteFolderRecursive(params.id, user._id);
+    await softDeleteFolderRecursive(id, user._id);
 
     return NextResponse.json({
       message: 'Folder deleted successfully',
