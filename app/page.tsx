@@ -19,11 +19,13 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Only redirect if we've finished loading and user is authenticated
     if (!isLoading && isAuthenticated) {
       router.push('/dashboard');
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Show loading spinner while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -32,8 +34,9 @@ export default function HomePage() {
     );
   }
 
+  // Don't render anything if authenticated (will redirect)
   if (isAuthenticated) {
-    return null; // Will redirect to dashboard
+    return null;
   }
 
   return (

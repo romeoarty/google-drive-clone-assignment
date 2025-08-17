@@ -25,10 +25,11 @@ export default function RegisterPage() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    // Only redirect if we've finished loading and user is authenticated
+    if (!authLoading && isAuthenticated) {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   // Password validation
   useEffect(() => {

@@ -18,17 +18,20 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // Only redirect if we've finished loading and user is not authenticated
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Only fetch data when authenticated and not loading
+    if (isAuthenticated && !isLoading) {
       fetchData();
     }
-  }, [isAuthenticated, fetchData]);
+  }, [isAuthenticated, isLoading, fetchData]);
 
+  // Show loading spinner while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -37,8 +40,9 @@ export default function DashboardLayout({
     );
   }
 
+  // Don't render anything if not authenticated (will redirect)
   if (!isAuthenticated) {
-    return null; // Will redirect to login
+    return null;
   }
 
   return (

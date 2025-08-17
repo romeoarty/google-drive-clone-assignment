@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
 
 interface User {
   _id: string;
@@ -10,6 +9,11 @@ interface User {
   name: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface AuthResponse {
+  user: User;
+  token: string;
 }
 
 interface AuthContextType {
@@ -35,27 +39,24 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const router = useRouter();
 
   // Memoized API request function
-  const makeAuthRequest = useCallback(async (
+  const makeAuthRequest = useCallback(async <T = unknown>(
     url: string, 
     options: RequestInit = {}
-  ): Promise<{ success: boolean; data?: any; error?: string }> => {
+  ): Promise<{ success: boolean; data?: T; error?: string }> => {
     try {
-      const token = Cookies.get('token');
-      const headers: HeadersInit = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers as Record<string, string>),
       };
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
 
       const response = await fetch(url, {
         ...options,
         headers,
+        credentials: 'include', // Include cookies
       });
 
       const data = await response.json();
@@ -74,45 +75,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check authentication status on mount
   const checkAuth = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const token = Cookies.get('token');
+      // Make a request to check auth - cookies will be sent automatically
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include', // Include cookies
+      });
       
-      if (!token) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
-
-      const result = await makeAuthRequest('/api/auth/me');
-      
-      if (result.success && result.data?.user) {
-        setUser(result.data.user);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          // Invalid response
+          setUser(null);
+        }
       } else {
-        // Invalid token, remove it
-        Cookies.remove('token');
+        // Not authenticated
         setUser(null);
       }
     } catch (error) {
       console.error('Auth check error:', error);
-      Cookies.remove('token');
       setUser(null);
     } finally {
+      setHasCheckedAuth(true);
       setIsLoading(false);
     }
-  }, [makeAuthRequest]);
+  }, []);
 
   // Login function with better error handling
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const result = await makeAuthRequest('/api/auth/login', {
+      const result = await makeAuthRequest<AuthResponse>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
 
       if (result.success && result.data) {
-        const { user: userData, token } = result.data;
+        const { user: userData } = result.data;
         setUser(userData);
-        Cookies.set('token', token, { expires: 7, secure: true, sameSite: 'strict' });
+        // Don't set client-side cookie - server handles it
         router.push('/dashboard');
         return { success: true };
       } else {
@@ -152,8 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Always clear client-side state
-      Cookies.remove('token');
+      // Clear client-side state only
       setUser(null);
       router.push('/login');
     }
@@ -164,14 +163,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     
     try {
-      const result = await makeAuthRequest('/api/auth/me');
-      if (result.success && result.data?.user) {
-        setUser(result.data.user);
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include', // Include cookies
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          setUser(data.user);
+        }
       }
     } catch (error) {
       console.error('Refresh user error:', error);
     }
-  }, [makeAuthRequest, user]);
+  }, [user]);
 
   // Check authentication on mount
   useEffect(() => {
@@ -180,7 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     user,
-    isLoading,
+    isLoading: isLoading || !hasCheckedAuth,
     isAuthenticated: !!user,
     login,
     register,
