@@ -63,12 +63,12 @@
 
   /* Context menu */
   .context-menu {
-    @apply absolute bg-white shadow-lg border border-gray-200 rounded-lg py-1 z-50;
+    @apply fixed bg-white shadow-lg border border-gray-200 rounded-lg py-1 z-50;
     min-width: 160px;
   }
   
   .context-menu-item {
-    @apply px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center;
+    @apply w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center;
   }
   
   .context-menu-item:hover {

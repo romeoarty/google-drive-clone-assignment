@@ -203,9 +203,42 @@ export default function FileList({ files, folders, onPreview }: FileListProps) {
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, item: IFile | IFolder, type: "file" | "folder") => {
       e.preventDefault();
+      
+      // Get viewport dimensions
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // Context menu dimensions (approximate)
+      const menuWidth = 160; // matches CSS min-width
+      const menuHeight = 200; // approximate height
+      
+      // Calculate adjusted position to keep menu within viewport
+      let adjustedX = e.clientX;
+      let adjustedY = e.clientY;
+      
+      // Adjust horizontal position if menu would go off right edge
+      if (e.clientX + menuWidth > viewportWidth) {
+        adjustedX = e.clientX - menuWidth;
+      }
+      
+      // Adjust vertical position if menu would go off bottom edge
+      if (e.clientY + menuHeight > viewportHeight) {
+        adjustedY = e.clientY - menuHeight;
+      }
+      
+      // Ensure menu doesn't go off left edge
+      if (adjustedX < 0) {
+        adjustedX = 10;
+      }
+      
+      // Ensure menu doesn't go off top edge
+      if (adjustedY < 0) {
+        adjustedY = 10;
+      }
+      
       setContextMenu({
         isOpen: true,
-        position: { x: e.clientX, y: e.clientY },
+        position: { x: adjustedX, y: adjustedY },
         item: { ...item, type },
       });
     },
