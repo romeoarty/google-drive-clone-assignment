@@ -8,7 +8,7 @@ import { authenticate } from '@/lib/auth';
 // GET /api/files/[id]/download - Download a file
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await authenticate(request);
@@ -22,9 +22,12 @@ export async function GET(
 
     await connectDB();
 
+    // Await params to get the actual values
+    const { id } = await params;
+
     // Find the file
     const file = await File.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isDeleted: false,
     });
