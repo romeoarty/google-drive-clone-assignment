@@ -64,7 +64,7 @@ export async function GET(
         { status: 500 }
       );
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Preview file error:', error);
     return NextResponse.json(
       { error: 'Failed to preview file' },

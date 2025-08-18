@@ -38,7 +38,7 @@ export async function GET(
     }
 
     return NextResponse.json({ folder });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get folder error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch folder' },
@@ -130,13 +130,14 @@ export async function PUT(
       message: 'Folder updated successfully',
       folder,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update folder error:', error);
 
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errorMessages = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
+      const validationError = error as unknown as { errors: Record<string, { message: string }> };
+      const errorMessages = Object.values(validationError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: errorMessages.join('. ') },
@@ -190,7 +191,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Folder deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delete folder error:', error);
     return NextResponse.json(
       { error: 'Failed to delete folder' },

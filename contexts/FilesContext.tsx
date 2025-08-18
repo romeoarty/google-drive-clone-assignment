@@ -60,7 +60,7 @@ export const FilesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const makeApiRequest = useCallback(async (
     url: string, 
     options: RequestInit = {}
-  ): Promise<{ success: boolean; data?: any; error?: string }> => {
+  ): Promise<{ success: boolean; data?: { files?: IFile[]; folders?: IFolder[] } | unknown; error?: string }> => {
     try {
       const response = await fetch(url, {
         ...options,
@@ -100,8 +100,8 @@ export const FilesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ]);
 
       if (filesResult.success && foldersResult.success) {
-        setFiles(filesResult.data?.files || []);
-        setFolders(foldersResult.data?.folders || []);
+        setFiles((filesResult.data as { files?: IFile[] })?.files || []);
+        setFolders((foldersResult.data as { folders?: IFolder[] })?.folders || []);
       } else {
         const errorMsg = filesResult.error || foldersResult.error || 'Failed to fetch data';
         setError(errorMsg);
@@ -119,7 +119,7 @@ export const FilesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Navigate to folder
   const navigateToFolder = useCallback((folderId: string | null) => {
     const folder = folderId ? folders.find(f => f._id === folderId) : null;
-    setCurrentFolder(folder);
+    setCurrentFolder(folder || null);
     
     // Update folder history
     setFolderHistory(prev => [...prev, folderId]);
@@ -134,7 +134,7 @@ export const FilesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       setFolderHistory(newHistory);
       const folder = previousFolderId ? folders.find(f => f._id === previousFolderId) : null;
-      setCurrentFolder(folder);
+      setCurrentFolder(folder || null);
     }
   }, [folderHistory, folders]);
 

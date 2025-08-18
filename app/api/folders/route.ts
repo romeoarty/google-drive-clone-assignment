@@ -24,7 +24,11 @@ export async function GET(request: NextRequest) {
     const order = searchParams.get('order') as 'asc' | 'desc' || 'asc';
 
     // Build query
-    const query: any = {
+    const query: {
+      userId: string;
+      isDeleted: boolean;
+      parentId?: string | null;
+    } = {
       userId: user._id,
       isDeleted: false,
     };
@@ -68,7 +72,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       folders: sortedFolders,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get folders error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch folders' },
@@ -164,13 +168,14 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create folder error:', error);
 
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errorMessages = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
+      const validationError = error as unknown as { errors: Record<string, { message: string }> };
+      const errorMessages = Object.values(validationError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: errorMessages.join('. ') },

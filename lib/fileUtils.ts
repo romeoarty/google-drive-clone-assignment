@@ -15,7 +15,7 @@ export const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 export const ensureUploadDir = async (): Promise<void> => {
   try {
     await access(UPLOAD_DIR);
-  } catch (error) {
+  } catch {
     // Directory doesn't exist, create it
     await mkdir(UPLOAD_DIR, { recursive: true });
     console.log(`Created upload directory: ${UPLOAD_DIR}`);

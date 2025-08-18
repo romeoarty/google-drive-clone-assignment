@@ -106,7 +106,7 @@ export default function RegisterPage() {
       if (!result.success) {
         setError(result.error || 'Registration failed');
       }
-    } catch (error) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);

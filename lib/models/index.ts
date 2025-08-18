@@ -147,7 +147,7 @@ folderSchema.virtual('filesCount', {
 
 // Pre-save middleware to handle soft deletes
 fileSchema.pre('findOneAndUpdate', function(next) {
-  const update = this.getUpdate() as any;
+  const update = this.getUpdate() as Record<string, unknown>;
   if (update.isDeleted === true && !update.deletedAt) {
     update.deletedAt = new Date();
   }
@@ -155,7 +155,7 @@ fileSchema.pre('findOneAndUpdate', function(next) {
 });
 
 folderSchema.pre('findOneAndUpdate', function(next) {
-  const update = this.getUpdate() as any;
+  const update = this.getUpdate() as Record<string, unknown>;
   if (update.isDeleted === true && !update.deletedAt) {
     update.deletedAt = new Date();
   }

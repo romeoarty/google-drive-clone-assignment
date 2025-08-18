@@ -113,7 +113,7 @@ export default function FilePreviewModal({
       } else {
         toast(result.error || "Failed to rename file", "error");
       }
-    } catch (error) {
+    } catch {
       toast("Failed to rename file", "error");
     } finally {
       setIsRenaming(false);
@@ -137,7 +137,7 @@ export default function FilePreviewModal({
       } else {
         toast(result.error || "Failed to delete file", "error");
       }
-    } catch (error) {
+    } catch {
       toast("Failed to delete file", "error");
     } finally {
       setIsDeleting(false);

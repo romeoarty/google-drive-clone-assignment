@@ -137,7 +137,14 @@ export const validatePassword = (password: string): {
 };
 
 // Sanitize user data for response
-export const sanitizeUser = (user: any): Partial<IUser> => {
-  const { password, ...sanitizedUser } = user.toObject ? user.toObject() : user;
+export const sanitizeUser = (user: IUser | { toObject(): IUser }): Partial<IUser> => {
+  let userObj: IUser;
+  if (typeof user === 'object' && user !== null && 'toObject' in user && typeof user.toObject === 'function') {
+    userObj = user.toObject();
+  } else {
+    userObj = user as IUser;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _, ...sanitizedUser } = userObj;
   return sanitizedUser;
 };

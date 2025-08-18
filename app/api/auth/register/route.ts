@@ -66,7 +66,9 @@ export async function POST(request: NextRequest) {
     await user.save();
 
     // Return success response (without password)
-    const { password: _, ...userWithoutPassword } = user.toObject();
+    const userObj = user.toObject();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = userObj;
 
     return NextResponse.json(
       {
@@ -75,13 +77,14 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration error:', error);
 
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errorMessages = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
+      const validationError = error as unknown as { errors: Record<string, { message: string }> };
+      const errorMessages = Object.values(validationError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: errorMessages.join('. ') },
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle duplicate key error
-    if (error.code === 11000) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 409 }

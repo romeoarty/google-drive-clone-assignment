@@ -37,22 +37,6 @@ export default function FileUpload({ isOpen, onClose }: FileUploadProps) {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    addFiles(files);
-  }, []);
-
-  const handleFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || []);
-      addFiles(files);
-    },
-    []
-  );
-
   const addFiles = useCallback((files: File[]) => {
     const newUploadFiles: UploadFile[] = files.map((file) => {
       const validation = validateFileUpload({
@@ -71,6 +55,22 @@ export default function FileUpload({ isOpen, onClose }: FileUploadProps) {
 
     setUploadFiles((prev) => [...prev, ...newUploadFiles]);
   }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    addFiles(files);
+  }, [addFiles]);
+
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      addFiles(files);
+    },
+    [addFiles]
+  );
 
   const removeFile = useCallback((id: string) => {
     setUploadFiles((prev) => prev.filter((f) => f.id !== id));
@@ -132,7 +132,7 @@ export default function FileUpload({ isOpen, onClose }: FileUploadProps) {
             )
           );
         }
-      } catch (error) {
+      } catch {
         setUploadFiles((prev) =>
           prev.map((f) =>
             f.id === uploadFileItem.id

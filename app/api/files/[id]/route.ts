@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { File } from '@/lib/models';
 import { authenticate } from '@/lib/auth';
-import { deleteFile } from '@/lib/fileUtils';
 
 // GET /api/files/[id] - Get a specific file
 export async function GET(
@@ -37,7 +36,7 @@ export async function GET(
     }
 
     return NextResponse.json({ file });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get file error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch file' },
@@ -129,13 +128,14 @@ export async function PUT(
       message: 'File updated successfully',
       file,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update file error:', error);
 
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errorMessages = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
+      const validationError = error as unknown as { errors: Record<string, { message: string }> };
+      const errorMessages = Object.values(validationError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: errorMessages.join('. ') },
@@ -200,7 +200,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'File deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delete file error:', error);
     return NextResponse.json(
       { error: 'Failed to delete file' },
