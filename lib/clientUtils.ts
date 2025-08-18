@@ -89,7 +89,7 @@ export const validateFileUpload = (file: {
   if (file.size > MAX_FILE_SIZE) {
     return {
       isValid: false,
-      error: `File size (${formatFileSize(file.size)}) exceeds maximum allowed size of ${formatFileSize(MAX_FILE_SIZE)}. Files are now stored in cloud storage with generous limits.`,
+      error: `File size (${formatFileSize(file.size)}) exceeds maximum allowed size of ${formatFileSize(MAX_FILE_SIZE)}.`,
     };
   }
 
