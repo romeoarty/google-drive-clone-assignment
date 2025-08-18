@@ -7,7 +7,7 @@ import { authenticate } from '@/lib/auth';
 import {
   ensureUploadDir,
   generateUniqueFilename,
-  getUploadDir,
+  getConsistentUploadDir,
 } from '@/lib/fileUtils';
 import { validateFileUpload } from '@/lib/clientUtils';
 import { access } from 'fs/promises';
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename and save file
     const uniqueFilename = generateUniqueFilename(file.name);
-    const uploadDir = getUploadDir();
+    const uploadDir = getConsistentUploadDir();
     const filePath = path.join(uploadDir, uniqueFilename);
     
     // Handle absolute paths correctly (especially for Vercel /tmp)
@@ -197,13 +197,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create file record in database
+    // Store the full path for Vercel compatibility, or relative path for local development
+    const pathToStore = uploadDir.startsWith('/') ? filePath : path.relative(process.cwd(), filePath);
+    
     const fileRecord = new File({
       name: uniqueFilename,
       originalName: file.name,
       size: file.size,
       type: file.type.split('/')[0], // e.g., 'image', 'document'
       mimeType: file.type,
-      path: filePath,
+      path: pathToStore,
       userId: user._id,
       folderId: folderId === 'root' ? null : folderId,
     });

@@ -100,6 +100,16 @@ export const getUploadDir = (): string => {
   return UPLOAD_DIR;
 };
 
+// Get consistent upload directory (cached for the current request)
+let cachedUploadDir: string | null = null;
+export const getConsistentUploadDir = (): string => {
+  if (cachedUploadDir === null) {
+    cachedUploadDir = getUploadDir();
+    console.log(`Cached upload directory: ${cachedUploadDir}`);
+  }
+  return cachedUploadDir;
+};
+
 // Generate unique filename
 export const generateUniqueFilename = (originalName: string): string => {
   const timestamp = Date.now();
