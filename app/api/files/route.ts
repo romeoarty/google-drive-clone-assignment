@@ -7,7 +7,7 @@ import { authenticate } from '@/lib/auth';
 import {
   ensureUploadDir,
   generateUniqueFilename,
-  UPLOAD_DIR,
+  getUploadDir,
 } from '@/lib/fileUtils';
 import { validateFileUpload } from '@/lib/clientUtils';
 
@@ -163,7 +163,8 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename and save file
     const uniqueFilename = generateUniqueFilename(file.name);
-    const filePath = path.join(UPLOAD_DIR, uniqueFilename);
+    const uploadDir = getUploadDir();
+    const filePath = path.join(uploadDir, uniqueFilename);
     const fullPath = path.join(process.cwd(), filePath);
 
     // Convert file to buffer and save
