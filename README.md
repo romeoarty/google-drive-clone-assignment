@@ -32,7 +32,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## 🚀 **Cloud Storage Integration**
 
 This application now uses **Cloudinary** for file storage, providing:
-- **No file size limits** (up to 100MB per file)
+- **4MB file size limit** (optimized for Vercel compatibility)
 - **Global CDN** for fast file delivery
 - **Automatic image optimization**
 - **Secure cloud storage**
@@ -69,12 +69,12 @@ This application now uses **Cloudinary** for file storage, providing:
 
 ### **Benefits Over Local Storage**
 
-✅ **No Vercel limitations** - Files stored in the cloud  
-✅ **Larger file support** - Up to 100MB per file  
+✅ **Vercel optimized** - 4MB limit ensures compatibility with serverless functions  
+✅ **Cloud storage** - Files stored securely in the cloud  
 ✅ **Better performance** - Global CDN delivery  
 ✅ **Automatic optimization** - Images are optimized automatically  
 ✅ **Scalable** - No server storage concerns  
-✅ **Reliable** - 99.9% uptime SLA  
+✅ **Reliable** - 99.9% uptime SLA
 
 ### **Vercel Deployment Notes**
 

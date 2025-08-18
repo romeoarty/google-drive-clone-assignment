@@ -16,6 +16,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
+  "env": {
+    "MAX_FILE_SIZE": "4194304"
+  },
   "headers": [
     {
       "source": "/api/files",

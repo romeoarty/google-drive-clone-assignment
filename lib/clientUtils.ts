@@ -1,8 +1,7 @@
 // Client-safe utility functions (no Node.js dependencies)
 
-// File size limits (in bytes) - Increased for cloud storage
-// Cloudinary free tier supports up to 100MB per file
-export const MAX_FILE_SIZE = parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '104857600'); // 100MB default
+// File size limits (in bytes) - Set to 4MB for Vercel compatibility
+export const MAX_FILE_SIZE = parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '4194304'); // 4MB default
 
 // Allowed file types
 export const ALLOWED_FILE_TYPES = {
