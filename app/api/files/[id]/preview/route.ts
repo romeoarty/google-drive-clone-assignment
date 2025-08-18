@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import path from 'path';
 import connectDB from '@/lib/mongodb';
 import { File } from '@/lib/models';
 import { authenticate } from '@/lib/auth';
 
-// GET /api/files/[id]/preview - Preview a file (without download headers)
+// GET /api/files/[id]/preview - Preview a file (with enhanced PDF handling)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -38,33 +36,60 @@ export async function GET(
       );
     }
 
-    try {
-      // Read file from filesystem using fs module
-      // Handle absolute paths correctly (especially for Vercel /tmp)
-      const fullPath = file.path.startsWith('/') ? file.path : path.join(process.cwd(), file.path);
-      const fileBuffer = await readFile(fullPath);
+    // For cloud storage, handle different file types appropriately
+    if (file.storageType === 'cloud' && file.cloudUrl) {
+      // Special handling for PDF files
+      if (file.mimeType === 'application/pdf') {
+        // For PDFs, we need to handle them specially
+        // Some browsers can't display PDFs directly, so we'll provide options
+        
+        // Check if user wants to download or preview
+        const { searchParams } = new URL(request.url);
+        const action = searchParams.get('action');
+        
+        if (action === 'download') {
+          // Force download
+          const response = NextResponse.redirect(file.cloudUrl);
+          response.headers.set('Content-Type', 'application/pdf');
+          response.headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalName)}"`);
+          return response;
+        }
+        
+        // For preview, try to display inline
+        const response = NextResponse.redirect(file.cloudUrl);
+        response.headers.set('Content-Type', 'application/pdf');
+        response.headers.set('Content-Disposition', 'inline');
+        response.headers.set('X-Content-Type-Options', 'nosniff');
+        
+        return response;
+      }
+      
+      // For images and other viewable files, redirect normally
+      if (file.mimeType.startsWith('image/') || file.mimeType.startsWith('text/')) {
+        return NextResponse.redirect(file.cloudUrl);
+      }
+      
+      // For other file types, redirect to download
+      return NextResponse.redirect(file.cloudUrl);
+    }
 
-      // Create response without attachment header for preview
-      const response = new NextResponse(new Uint8Array(fileBuffer), {
-        status: 200,
-        headers: {
-          'Content-Type': file.mimeType,
-          'Content-Length': file.size.toString(),
-          'Cache-Control': 'private, max-age=3600',
-          'X-Content-Type-Options': 'nosniff',
-          'X-Frame-Options': 'SAMEORIGIN',
-          // No Content-Disposition header - allows browser to display content
-        },
-      });
-
-      return response;
-    } catch (fileError) {
-      console.error('Error reading file:', fileError);
+    // For local files (fallback), return the file path
+    if (file.storageType === 'local') {
       return NextResponse.json(
-        { error: 'File not accessible' },
-        { status: 500 }
+        { 
+          error: 'Local file preview not supported. Please use cloud storage.',
+          filePath: file.path 
+        },
+        { status: 400 }
       );
     }
+
+    // If no valid storage type found
+    return NextResponse.json(
+      { error: 'File storage type not supported' },
+      { status: 400 }
+    );
+
   } catch (error: unknown) {
     console.error('Preview file error:', error);
     return NextResponse.json(

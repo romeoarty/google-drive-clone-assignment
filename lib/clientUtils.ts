@@ -1,8 +1,8 @@
 // Client-safe utility functions (no Node.js dependencies)
 
-// File size limits (in bytes) - Reduced for Vercel compatibility
-// Vercel has a 4.5MB payload limit for serverless functions
-export const MAX_FILE_SIZE = parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '4194304'); // 4MB default for Vercel
+// File size limits (in bytes) - Increased for cloud storage
+// Cloudinary free tier supports up to 100MB per file
+export const MAX_FILE_SIZE = parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '104857600'); // 100MB default
 
 // Allowed file types
 export const ALLOWED_FILE_TYPES = {
@@ -90,7 +90,7 @@ export const validateFileUpload = (file: {
   if (file.size > MAX_FILE_SIZE) {
     return {
       isValid: false,
-      error: `File size (${formatFileSize(file.size)}) exceeds maximum allowed size of ${formatFileSize(MAX_FILE_SIZE)}. Due to Vercel's serverless limitations, files larger than 4MB cannot be uploaded.`,
+      error: `File size (${formatFileSize(file.size)}) exceeds maximum allowed size of ${formatFileSize(MAX_FILE_SIZE)}. Files are now stored in cloud storage with generous limits.`,
     };
   }
 

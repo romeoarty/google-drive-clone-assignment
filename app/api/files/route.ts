@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import path from 'path';
 import connectDB from '@/lib/mongodb';
 import { File, Folder } from '@/lib/models';
 import { authenticate } from '@/lib/auth';
-import {
-  ensureUploadDir,
-  generateUniqueFilename,
-  getConsistentUploadDir,
-} from '@/lib/fileUtils';
+import { generateUniqueFilename } from '@/lib/fileUtils';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { validateFileUpload } from '@/lib/clientUtils';
-import { access } from 'fs/promises';
 
 // GET /api/files - Get all files for the authenticated user
 export async function GET(request: NextRequest) {
@@ -101,9 +95,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure upload directory exists
-    await ensureUploadDir();
-
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const folderId = formData.get('folderId') as string | null;
@@ -162,51 +153,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename and save file
+    // Generate unique filename
     const uniqueFilename = generateUniqueFilename(file.name);
-    const uploadDir = getConsistentUploadDir();
-    const filePath = path.join(uploadDir, uniqueFilename);
     
-    // Handle absolute paths correctly (especially for Vercel /tmp)
-    const fullPath = uploadDir.startsWith('/') ? filePath : path.join(process.cwd(), filePath);
-    
-    console.log(`Upload directory: ${uploadDir}`);
-    console.log(`File path: ${filePath}`);
-    console.log(`Full path: ${fullPath}`);
-
-    // Validate the upload directory is accessible
-    try {
-      await access(uploadDir);
-      console.log(`Upload directory is accessible: ${uploadDir}`);
-    } catch (dirError) {
-      console.error(`Upload directory not accessible: ${uploadDir}`, dirError);
-      throw new Error(`Upload directory not accessible: ${uploadDir}`);
-    }
-
-    // Convert file to buffer and save
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
-    try {
-      await writeFile(fullPath, buffer);
-      console.log(`File saved successfully to: ${fullPath}`);
-    } catch (writeError: unknown) {
-      console.error(`Failed to write file to: ${fullPath}`, writeError);
-      const errorMessage = writeError instanceof Error ? writeError.message : 'Unknown error';
-      throw new Error(`Failed to save file: ${errorMessage}`);
-    }
+
+    // Upload to Cloudinary
+    const cloudResult = await uploadToCloudinary(
+      buffer,
+      uniqueFilename,
+      `users/${user._id}`
+    );
 
     // Create file record in database
-    // Store the full path for Vercel compatibility, or relative path for local development
-    const pathToStore = uploadDir.startsWith('/') ? filePath : path.relative(process.cwd(), filePath);
-    
     const fileRecord = new File({
       name: uniqueFilename,
       originalName: file.name,
       size: file.size,
       type: file.type.split('/')[0], // e.g., 'image', 'document'
       mimeType: file.type,
-      path: pathToStore,
+      path: cloudResult.url, // Store Cloudinary URL as path
+      cloudUrl: cloudResult.url,
+      cloudPublicId: cloudResult.public_id,
+      storageType: 'cloud',
       userId: user._id,
       folderId: folderId === 'root' ? null : folderId,
     });
@@ -215,7 +186,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'File uploaded successfully',
+        message: 'File uploaded successfully to cloud storage',
         file: fileRecord,
       },
       { status: 201 }

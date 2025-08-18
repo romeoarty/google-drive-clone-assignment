@@ -29,37 +29,57 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## 🚀 **Cloud Storage Integration**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This application now uses **Cloudinary** for file storage, providing:
+- **No file size limits** (up to 100MB per file)
+- **Global CDN** for fast file delivery
+- **Automatic image optimization**
+- **Secure cloud storage**
+- **Free tier**: 25GB storage, 25GB bandwidth/month
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### **Cloudinary Setup**
 
-### Vercel Deployment Notes
+1. **Create Cloudinary Account**:
+   - Go to [cloudinary.com](https://cloudinary.com)
+   - Sign up for a free account
+   - Get your credentials from the dashboard
 
-When deploying to Vercel, the application automatically handles file uploads using Vercel's temporary file system (`/tmp` directory). This ensures compatibility with Vercel's serverless environment.
+2. **Environment Variables**:
+   ```bash
+   # Copy env.example to .env.local
+   cp env.example .env.local
+   
+   # Add your Cloudinary credentials
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
 
-#### File Upload Behavior:
-- **Development**: Files are stored in the local `uploads/` directory
-- **Vercel Production**: Files are stored in Vercel's `/tmp` directory (temporary storage)
-- **Fallback**: If Vercel's temp directory is not accessible, the app falls back to local uploads
+3. **Deploy to Vercel**:
+   - Add the same environment variables in your Vercel project settings
+   - Files will be automatically uploaded to Cloudinary
 
-#### Important Considerations:
-1. **Temporary Storage**: Files uploaded to Vercel are stored temporarily and may not persist between function invocations
-2. **File Size Limits**: Due to Vercel's serverless function payload limitations, files cannot exceed **4MB**. This is a hard limit that cannot be bypassed.
-3. **File Persistence**: For production use cases requiring persistent file storage, consider using:
-   - Cloud storage services (AWS S3, Google Cloud Storage, Cloudinary)
-   - Database storage for smaller files
-   - External file hosting services
+### **File Operations**
 
-#### Troubleshooting:
-If you encounter file upload errors on Vercel:
-1. Check the build logs for any directory creation errors
-2. Ensure the `vercel.json` configuration is properly set
-3. Consider implementing cloud storage for production deployments
+- **Upload**: Files are uploaded directly to Cloudinary
+- **Preview**: Files are served from Cloudinary CDN
+- **Download**: Files are downloaded from Cloudinary with proper headers
+- **Storage**: All file metadata is stored in MongoDB
 
-#### Build Process:
-The build process automatically creates the `uploads/` directory to ensure local development works correctly:
-```bash
-npm run build  # Creates uploads/ directory after building
-```
+### **Benefits Over Local Storage**
+
+✅ **No Vercel limitations** - Files stored in the cloud  
+✅ **Larger file support** - Up to 100MB per file  
+✅ **Better performance** - Global CDN delivery  
+✅ **Automatic optimization** - Images are optimized automatically  
+✅ **Scalable** - No server storage concerns  
+✅ **Reliable** - 99.9% uptime SLA  
+
+### **Vercel Deployment Notes**
+
+When deploying to Vercel, the application now uses cloud storage instead of local file system:
+- **No uploads folder needed** - Files go directly to Cloudinary
+- **No file size limits** - Cloudinary handles large files
+- **Better performance** - Files served from global CDN
+- **More reliable** - No serverless function file system issues

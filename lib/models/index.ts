@@ -51,9 +51,25 @@ const fileSchema = new mongoose.Schema({
     type: String,
     required: [true, 'MIME type is required']
   },
+  // Support both local file paths and cloud storage
   path: {
     type: String,
     required: [true, 'File path is required']
+  },
+  // Cloud storage fields
+  cloudUrl: {
+    type: String,
+    default: null
+  },
+  cloudPublicId: {
+    type: String,
+    default: null
+  },
+  // Storage type: 'local' or 'cloud'
+  storageType: {
+    type: String,
+    enum: ['local', 'cloud'],
+    default: 'cloud'
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -185,6 +201,9 @@ export interface IFile {
   type: string;
   mimeType: string;
   path: string;
+  cloudUrl?: string;
+  cloudPublicId?: string;
+  storageType: 'local' | 'cloud';
   userId: string;
   folderId?: string;
   isDeleted: boolean;

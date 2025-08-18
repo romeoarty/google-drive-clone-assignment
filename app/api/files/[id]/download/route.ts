@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import path from 'path';
 import connectDB from '@/lib/mongodb';
 import { File } from '@/lib/models';
 import { authenticate } from '@/lib/auth';
 
-// GET /api/files/[id]/download - Download a file
+// GET /api/files/[id]/download - Download a file (with enhanced PDF support)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -39,31 +37,49 @@ export async function GET(
       );
     }
 
-    try {
-      // Read file from filesystem using fs module (addressing feedback)
-      // Handle absolute paths correctly (especially for Vercel /tmp)
-      const fullPath = file.path.startsWith('/') ? file.path : path.join(process.cwd(), file.path);
-      const fileBuffer = await readFile(fullPath);
-
-      // Create response with appropriate headers
-      const response = new NextResponse(new Uint8Array(fileBuffer), {
-        status: 200,
-        headers: {
-          'Content-Type': file.mimeType,
-          'Content-Length': file.size.toString(),
-          'Content-Disposition': `attachment; filename="${encodeURIComponent(file.originalName)}"`,
-          'Cache-Control': 'private, max-age=3600',
-        },
-      });
-
+    // For cloud storage, handle different file types appropriately
+    if (file.storageType === 'cloud' && file.cloudUrl) {
+      // Special handling for PDF files
+      if (file.mimeType === 'application/pdf') {
+        // For PDFs, redirect to Cloudinary with download headers
+        const response = NextResponse.redirect(file.cloudUrl);
+        
+        // Add PDF-specific download headers
+        response.headers.set('Content-Type', 'application/pdf');
+        response.headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalName)}"`);
+        response.headers.set('Cache-Control', 'private, max-age=3600');
+        response.headers.set('X-Content-Type-Options', 'nosniff');
+        
+        return response;
+      }
+      
+      // For other file types, redirect with standard download headers
+      const response = NextResponse.redirect(file.cloudUrl);
+      
+      // Add standard download headers
+      response.headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalName)}"`);
+      response.headers.set('Cache-Control', 'private, max-age=3600');
+      
       return response;
-    } catch (fileError) {
-      console.error('Error reading file:', fileError);
+    }
+
+    // For local files (fallback), return error
+    if (file.storageType === 'local') {
       return NextResponse.json(
-        { error: 'File not accessible' },
-        { status: 500 }
+        { 
+          error: 'Local file download not supported. Please use cloud storage.',
+          filePath: file.path 
+        },
+        { status: 400 }
       );
     }
+
+    // If no valid storage type found
+    return NextResponse.json(
+      { error: 'File storage type not supported' },
+      { status: 400 }
+    );
+
   } catch (error: unknown) {
     console.error('Download file error:', error);
     return NextResponse.json(
