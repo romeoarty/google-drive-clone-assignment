@@ -40,7 +40,8 @@ export async function GET(
 
     try {
       // Read file from filesystem using fs module
-      const fullPath = path.join(process.cwd(), file.path);
+      // Handle absolute paths correctly (especially for Vercel /tmp)
+      const fullPath = file.path.startsWith('/') ? file.path : path.join(process.cwd(), file.path);
       const fileBuffer = await readFile(fullPath);
 
       // Create response without attachment header for preview

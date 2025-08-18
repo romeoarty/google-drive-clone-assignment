@@ -10,6 +10,7 @@ import {
   getUploadDir,
 } from '@/lib/fileUtils';
 import { validateFileUpload } from '@/lib/clientUtils';
+import { access } from 'fs/promises';
 
 // GET /api/files - Get all files for the authenticated user
 export async function GET(request: NextRequest) {
@@ -165,12 +166,35 @@ export async function POST(request: NextRequest) {
     const uniqueFilename = generateUniqueFilename(file.name);
     const uploadDir = getUploadDir();
     const filePath = path.join(uploadDir, uniqueFilename);
-    const fullPath = path.join(process.cwd(), filePath);
+    
+    // Handle absolute paths correctly (especially for Vercel /tmp)
+    const fullPath = uploadDir.startsWith('/') ? filePath : path.join(process.cwd(), filePath);
+    
+    console.log(`Upload directory: ${uploadDir}`);
+    console.log(`File path: ${filePath}`);
+    console.log(`Full path: ${fullPath}`);
+
+    // Validate the upload directory is accessible
+    try {
+      await access(uploadDir);
+      console.log(`Upload directory is accessible: ${uploadDir}`);
+    } catch (dirError) {
+      console.error(`Upload directory not accessible: ${uploadDir}`, dirError);
+      throw new Error(`Upload directory not accessible: ${uploadDir}`);
+    }
 
     // Convert file to buffer and save
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(fullPath, buffer);
+    
+    try {
+      await writeFile(fullPath, buffer);
+      console.log(`File saved successfully to: ${fullPath}`);
+    } catch (writeError: unknown) {
+      console.error(`Failed to write file to: ${fullPath}`, writeError);
+      const errorMessage = writeError instanceof Error ? writeError.message : 'Unknown error';
+      throw new Error(`Failed to save file: ${errorMessage}`);
+    }
 
     // Create file record in database
     const fileRecord = new File({

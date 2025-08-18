@@ -67,13 +67,25 @@ export const ensureUploadDir = async (): Promise<void> => {
   }
 };
 
+// Validate file path and ensure it's accessible
+export const validateFilePath = async (filePath: string): Promise<boolean> => {
+  try {
+    // Handle absolute paths correctly (especially for Vercel /tmp)
+    const fullPath = filePath.startsWith('/') ? filePath : path.join(process.cwd(), filePath);
+    await access(fullPath);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 // Get the appropriate upload directory path
 export const getUploadDir = (): string => {
   if (isVercel) {
     try {
       // Check if /tmp is accessible
       fs.accessSync('/tmp');
-      console.log('Using Vercel temp directory for uploads');
+      console.log('Using Vercel temp directory for uploads: /tmp');
       return '/tmp';
     } catch {
       console.log('Vercel temp directory not accessible, using local uploads');
@@ -100,7 +112,8 @@ export const generateUniqueFilename = (originalName: string): string => {
 // Delete file from filesystem
 export const deleteFile = async (filePath: string): Promise<void> => {
   try {
-    const fullPath = path.join(process.cwd(), filePath);
+    // Handle absolute paths correctly (especially for Vercel /tmp)
+    const fullPath = filePath.startsWith('/') ? filePath : path.join(process.cwd(), filePath);
     await access(fullPath); // Check if file exists
     await unlink(fullPath);
     console.log(`Deleted file: ${filePath}`);
@@ -117,7 +130,8 @@ export const deleteFile = async (filePath: string): Promise<void> => {
 // Get file stats
 export const getFileStats = async (filePath: string): Promise<fs.Stats | null> => {
   try {
-    const fullPath = path.join(process.cwd(), filePath);
+    // Handle absolute paths correctly (especially for Vercel /tmp)
+    const fullPath = filePath.startsWith('/') ? filePath : path.join(process.cwd(), filePath);
     return await stat(fullPath);
   } catch (error) {
     console.error(`Error getting file stats for ${filePath}:`, error);
