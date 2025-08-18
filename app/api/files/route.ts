@@ -220,6 +220,19 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('File upload error:', error);
 
+    // Handle specific Vercel payload size errors
+    if (error && typeof error === 'object' && 'message' in error) {
+      const errorMessage = (error as { message: string }).message;
+      if (errorMessage.includes('Request Entity Too Large') || errorMessage.includes('FUNCTION_PAYLOAD_TOO_LARGE')) {
+        return NextResponse.json(
+          { 
+            error: 'File too large. Due to Vercel serverless limitations, files cannot exceed 4MB. Please reduce file size or use cloud storage for larger files.' 
+          },
+          { status: 413 }
+        );
+      }
+    }
+
     // Handle mongoose validation errors
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
       const validationError = error as unknown as { errors: Record<string, { message: string }> };

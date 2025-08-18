@@ -197,7 +197,7 @@ export default function FileUpload({ isOpen, onClose }: FileUploadProps) {
             Choose files or drag them here
           </p>
           <p className="text-sm text-gray-600 mb-4">
-            Supports images, documents, and other file types up to 10MB
+            Supports images, documents, and other file types up to 4MB
           </p>
           <Button variant="outline">Browse Files</Button>
 

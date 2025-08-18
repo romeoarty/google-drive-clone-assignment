@@ -46,7 +46,8 @@ When deploying to Vercel, the application automatically handles file uploads usi
 
 #### Important Considerations:
 1. **Temporary Storage**: Files uploaded to Vercel are stored temporarily and may not persist between function invocations
-2. **File Persistence**: For production use cases requiring persistent file storage, consider using:
+2. **File Size Limits**: Due to Vercel's serverless function payload limitations, files cannot exceed **4MB**. This is a hard limit that cannot be bypassed.
+3. **File Persistence**: For production use cases requiring persistent file storage, consider using:
    - Cloud storage services (AWS S3, Google Cloud Storage, Cloudinary)
    - Database storage for smaller files
    - External file hosting services

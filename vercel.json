@@ -1,16 +1,41 @@
 {
   "functions": {
     "app/api/files/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 60,
+      "memory": 1024
     },
     "app/api/files/[id]/download/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 512
     },
     "app/api/files/[id]/preview/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 512
     }
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "env": {
+    "MAX_FILE_SIZE": "4194304"
+  },
+  "headers": [
+    {
+      "source": "/api/files",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ]
 }

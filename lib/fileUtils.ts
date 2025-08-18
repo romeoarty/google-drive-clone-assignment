@@ -7,8 +7,9 @@ const access = promisify(fs.access);
 const unlink = promisify(fs.unlink);
 const stat = promisify(fs.stat);
 
-// File size limits (in bytes)
-export const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760'); // 10MB default
+// File size limits (in bytes) - Reduced for Vercel compatibility
+// Vercel has a 4.5MB payload limit for serverless functions
+export const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '4194304'); // 4MB default for Vercel
 export const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 
 // Check if we're running on Vercel
